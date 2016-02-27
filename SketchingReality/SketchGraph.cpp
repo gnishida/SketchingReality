@@ -158,12 +158,12 @@ namespace sketch {
 
 		return true;
 	}
-	
+
 	/**
-	 * 指定された点を既存グラフに接続するための交点を探す。
-	 * もし既存エッジに接続する場合は、既存エッジを分割する。
-	 * 近くに頂点・エッジがない場合は、新規頂点を追加する。
-	 */
+	* 指定された点を既存グラフに接続するための交点を探す。
+	* もし既存エッジに接続する場合は、既存エッジを分割する。
+	* 近くに頂点・エッジがない場合は、新規頂点を追加する。
+	*/
 	void SketchGraph::findJunction(const glm::vec2& pt, VertexDesc& v_desc, float threshold) {
 		if (findVertex(pt, v_desc, DIST_TO_JUNCTION_THRESHOLD)) {
 			// do nothing
@@ -267,10 +267,10 @@ namespace sketch {
 				std::pair<EdgeDesc, bool> edge_pair2 = boost::add_edge(v, src_desc, graph);
 				graph[edge_pair2.first] = e2;
 			}
-			
+
 			boost::remove_edge(min_e, graph);
 		}
-		
+
 		return found;
 	}
 
@@ -324,8 +324,8 @@ namespace sketch {
 	}
 
 	/**
-	 * This equation is defined in Equation (3) in the Sketching Reality paper.
-	 */
+	* This equation is defined in Equation (3) in the Sketching Reality paper.
+	*/
 	float SketchGraph::g(EdgeDesc e_desc, const VanishingPoint& vp) {
 		float dist = d(e_desc, vp);
 		if (dist < 0.35f) {
@@ -357,9 +357,9 @@ namespace sketch {
 	}
 
 	/**
-	 * Compute the validness of the face in terms of two selected vanishing points.
-	 * See the definition of P(F valid|e_0,...,e_k,p_va,p_vb) in p.8 in the Sketching Reality paper.
-	 */
+	* Compute the validness of the face in terms of two selected vanishing points.
+	* See the definition of P(F valid|e_0,...,e_k,p_va,p_vb) in p.8 in the Sketching Reality paper.
+	*/
 	float SketchGraph::computeFaceValidness(const Face& face, const VanishingPoint& vp1, const VanishingPoint& vp2) {
 		float max_P_vp1 = 0.0f;
 		float max_P_vp2 = 0.0f;
@@ -411,7 +411,7 @@ namespace sketch {
 				VertexDesc src = boost::source(*ei, graph);
 				VertexDesc tgt = boost::target(*ei, graph);
 				glm::vec2 vec = graph[tgt]->pt - graph[src]->pt;
-				
+
 				edges[-atan2f(vec.y, vec.x)] = *ei;
 			}
 
@@ -426,28 +426,30 @@ namespace sketch {
 
 	void SketchGraph::reconstruct(Camera* camera, int screen_width, int screen_height) {
 		cv::Mat_<float> A(20, 12, 0.0f);
-		
+
 		std::vector<glm::vec2> p;
 		VertexIter vi, vend;
 		for (boost::tie(vi, vend) = boost::vertices(graph); vi != vend; ++vi) {
-			p.push_back(glm::vec2(graph[*vi]->pt.x / screen_width * 2 - 1, graph[*vi]->pt.y / screen_height * 2 - 1));
 			std::cout << "(" << graph[*vi]->pt.x << ", " << graph[*vi]->pt.y << ")" << std::endl;
+
+			// わざと、X, Y座標ともに、screen_heightでわる。これにより、X座標も、Y座標と同じ比率となる。
+			p.push_back(glm::vec2((graph[*vi]->pt.x / screen_width * 2 - 1) * camera->aspect(), graph[*vi]->pt.y / screen_height * 2 - 1));
 		}
 
 		////////////////// debug ///////////////////////////////////////////////
 		for (int i = 0; i < pv.size(); ++i) {
-			pv[i].pt.x = pv[i].pt.x / screen_width * 2 - 1;
+			pv[i].pt.x = (pv[i].pt.x / screen_width * 2 - 1) * camera->aspect();
 			pv[i].pt.y = pv[i].pt.y / screen_height * 2 - 1;
-			std::cout << "pv: (" << pv[i].pt.x << ", " << pv[i].pt.y << ")" << std::endl;
+			std::cout << "pv[" << i << "]: (" << pv[i].pt.x << ", " << pv[i].pt.y << ")" << std::endl;
 		}
 		////////////////// debug ///////////////////////////////////////////////
 
 		// projection constraints
 		for (int i = 0; i < p.size(); ++i) {
 			A(i * 2 + 0, i * 3 + 0) = 1;
-			A(i * 2 + 0, i * 3 + 2) = -p[i].x / camera->pMatrix[0][0];
+			A(i * 2 + 0, i * 3 + 2) = -p[i].x / camera->f();
 			A(i * 2 + 1, i * 3 + 1) = 1;
-			A(i * 2 + 1, i * 3 + 2) = -p[i].y / camera->pMatrix[1][1];
+			A(i * 2 + 1, i * 3 + 2) = -p[i].y / camera->f();
 		}
 
 		// vanishing point constraints
