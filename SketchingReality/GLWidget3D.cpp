@@ -370,8 +370,8 @@ void GLWidget3D::drawLine(const QPoint& startPoint, const QPoint& endPoint) {
 	painter.setRenderHint(QPainter::HighQualityAntialiasing);
 	//painter.setPen(QPen(QBrush(QColor(0, 0, 0)), 3, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
 
-	current_stroke.push_back(glm::vec2(endPoint.x(), height() - endPoint.y()));
-	strokes.back().push_back(glm::vec2(endPoint.x(), height() - endPoint.y()));
+	current_stroke.push_back(glm::vec2(((float)endPoint.x() / width() * 2 - 1) * camera.aspect(), 1.0f - (float)endPoint.y() / height() * 2));
+	strokes.back().push_back(glm::vec2(((float)endPoint.x() / width() * 2 - 1) * camera.aspect(), 1.0f - (float)endPoint.y() / height() * 2));
 
 	painter.drawLine(pt1, pt2);
 }
@@ -397,14 +397,14 @@ void GLWidget3D::computeVanishingPoints(std::vector<sketch::VanishingPoint>& pv)
 	p7 = camera.mvpMatrix * p7;
 	p8 = camera.mvpMatrix * p8;
 
-	glm::vec2 pp1(width() * (p1.x / p1.w * 0.5 + 0.5), height() * (p1.y / p1.w * 0.5 + 0.5));
-	glm::vec2 pp2(width() * (p2.x / p2.w * 0.5 + 0.5), height() * (p2.y / p2.w * 0.5 + 0.5));
-	glm::vec2 pp3(width() * (p3.x / p3.w * 0.5 + 0.5), height() * (p3.y / p3.w * 0.5 + 0.5));
-	glm::vec2 pp4(width() * (p4.x / p4.w * 0.5 + 0.5), height() * (p4.y / p4.w * 0.5 + 0.5));
-	glm::vec2 pp5(width() * (p5.x / p5.w * 0.5 + 0.5), height() * (p5.y / p5.w * 0.5 + 0.5));
-	glm::vec2 pp6(width() * (p6.x / p6.w * 0.5 + 0.5), height() * (p6.y / p6.w * 0.5 + 0.5));
-	glm::vec2 pp7(width() * (p7.x / p7.w * 0.5 + 0.5), height() * (p7.y / p7.w * 0.5 + 0.5));
-	glm::vec2 pp8(width() * (p8.x / p8.w * 0.5 + 0.5), height() * (p8.y / p8.w * 0.5 + 0.5));
+	glm::vec2 pp1(p1.x / p1.w * camera.aspect(), p1.y / p1.w);
+	glm::vec2 pp2(p2.x / p2.w * camera.aspect(), p2.y / p2.w);
+	glm::vec2 pp3(p3.x / p3.w * camera.aspect(), p3.y / p3.w);
+	glm::vec2 pp4(p4.x / p4.w * camera.aspect(), p4.y / p4.w);
+	glm::vec2 pp5(p5.x / p5.w * camera.aspect(), p5.y / p5.w);
+	glm::vec2 pp6(p6.x / p6.w * camera.aspect(), p6.y / p6.w);
+	glm::vec2 pp7(p7.x / p7.w * camera.aspect(), p7.y / p7.w);
+	glm::vec2 pp8(p8.x / p8.w * camera.aspect(), p8.y / p8.w);
 
 	float tab, tcd;
 	if (utils::segmentSegmentIntersect(pp2, pp3, pp5, pp8, &tab, &tcd, false, pv[0].pt)) {
@@ -413,6 +413,7 @@ void GLWidget3D::computeVanishingPoints(std::vector<sketch::VanishingPoint>& pv)
 	else {
 		pv[0].type = sketch::VanishingPoint::TYPE_INFINITE;
 		pv[0].pt = pp2 - pp3;
+		pv[0].pt /= glm::length(pv[0].pt);
 	}
 	if (utils::segmentSegmentIntersect(pp4, pp3, pp5, pp6, &tab, &tcd, false, pv[1].pt)) {
 		pv[1].type = sketch::VanishingPoint::TYPE_FINITE;
@@ -420,6 +421,7 @@ void GLWidget3D::computeVanishingPoints(std::vector<sketch::VanishingPoint>& pv)
 	else {
 		pv[1].type = sketch::VanishingPoint::TYPE_INFINITE;
 		pv[1].pt = pp4 - pp3;
+		pv[1].pt /= glm::length(pv[1].pt);
 	}
 	if (utils::segmentSegmentIntersect(pp6, pp2, pp8, pp4, &tab, &tcd, false, pv[2].pt)) {
 		pv[2].type = sketch::VanishingPoint::TYPE_FINITE;
@@ -427,6 +429,7 @@ void GLWidget3D::computeVanishingPoints(std::vector<sketch::VanishingPoint>& pv)
 	else {
 		pv[2].type = sketch::VanishingPoint::TYPE_FINITE;
 		pv[2].pt = pp7 - pp3;
+		pv[2].pt /= glm::length(pv[2].pt);
 	}
 }
 
@@ -478,8 +481,8 @@ void GLWidget3D::mousePressEvent(QMouseEvent* e) {
 
 	if (e->buttons() & Qt::LeftButton) {
 		std::vector<glm::vec2> pts;
-		pts.push_back(glm::vec2(e->x(), height() - e->y()));
-		current_stroke.push_back(glm::vec2(e->x(), height() - e->y()));
+		pts.push_back(glm::vec2(((float)e->x() / width() * 2 - 1) * camera.aspect(), 1.0f - (float)e->y() / height() * 2));
+		current_stroke.push_back(glm::vec2(((float)e->x() / width() * 2 - 1) * camera.aspect(), 1.0f - (float)e->y() / height() * 2));
 		strokes.push_back(pts);
 	}
 }
@@ -637,7 +640,7 @@ void GLWidget3D::paintEvent(QPaintEvent* e) {
 	painter.setRenderHint(QPainter::HighQualityAntialiasing);
 	painter.setPen(QPen(QBrush(QColor(0, 0, 0)), 1));
 	for (int i = 1; i < current_stroke.size(); ++i) {
-		painter.drawLine(current_stroke[i - 1].x, height() - current_stroke[i - 1].y, current_stroke[i].x, height() - current_stroke[i].y);
+		painter.drawLine(current_stroke[i - 1].x * 0.5f * height() + width() * 0.5f, (1.0f - current_stroke[i - 1].y) * 0.5f * height(), current_stroke[i].x * 0.5f * height() + width() * 0.5f, (1.0f - current_stroke[i].y) * 0.5f * height());
 	}
 
 	// draw face
@@ -686,7 +689,7 @@ void GLWidget3D::paintEvent(QPaintEvent* e) {
 		painter.setPen(pen);
 		
 		for (int k = 1; k < sketchGraph.graph[*ei]->points.size(); ++k) {
-			painter.drawLine(sketchGraph.graph[*ei]->points[k - 1].x, height() - sketchGraph.graph[*ei]->points[k - 1].y, sketchGraph.graph[*ei]->points[k].x, height() - sketchGraph.graph[*ei]->points[k].y);
+			painter.drawLine(sketchGraph.graph[*ei]->points[k - 1].x * 0.5f * height() + width() * 0.5f, (1.0f - sketchGraph.graph[*ei]->points[k - 1].y) * 0.5f * height() , sketchGraph.graph[*ei]->points[k].x * 0.5f * height() + width() * 0.5f, (1.0f - sketchGraph.graph[*ei]->points[k].y) * 0.5f * height());
 		}
 	}
 
@@ -697,24 +700,26 @@ void GLWidget3D::paintEvent(QPaintEvent* e) {
 	painter.setPen(QPen(QBrush(QColor(0, 0, 0)), 1));
 	for (boost::tie(vi, vend) = boost::vertices(sketchGraph.graph); vi != vend; ++vi) {
 		sketch::VertexPtr v = sketchGraph.graph[*vi];
+		QString letter;
 		if (v->type == sketch::SketchVertex::TYPE_ISOLATED) {
-			painter.drawText(v->pt.x - 5, height() - v->pt.y - 5, 30, 30, Qt::AlignHCenter | Qt::AlignVCenter, "I");
+			letter = "I";
 		}
 		else if (v->type == sketch::SketchVertex::TYPE_L) {
-			painter.drawText(v->pt.x - 5, height() - v->pt.y - 5, 30, 30, Qt::AlignHCenter | Qt::AlignVCenter, "L");
+			letter = "L";
 		}
 		else if (v->type == sketch::SketchVertex::TYPE_T) {
-			painter.drawText(v->pt.x - 5, height() - v->pt.y - 5, 30, 30, Qt::AlignHCenter | Qt::AlignVCenter, "T");
+			letter = "T";
 		}
 		else if (v->type == sketch::SketchVertex::TYPE_Y) {
-			painter.drawText(v->pt.x - 5, height() - v->pt.y - 5, 30, 30, Qt::AlignHCenter | Qt::AlignVCenter, "Y");
+			letter = "Y";
 		}
 		else if (v->type == sketch::SketchVertex::TYPE_E) {
-			painter.drawText(v->pt.x - 5, height() - v->pt.y - 5, 30, 30, Qt::AlignHCenter | Qt::AlignVCenter, "E");
+			letter = "E";
 		}
 		else if (v->type == sketch::SketchVertex::TYPE_X) {
-			painter.drawText(v->pt.x - 5, height() - v->pt.y - 5, 30, 30, Qt::AlignHCenter | Qt::AlignVCenter, "X");
+			letter = "X";
 		}
+		painter.drawText(v->pt.x * 0.5f * height() + width() * 0.5f - 5, (1.0f - v->pt.y) * 0.5f * height() - 5, 30, 30, Qt::AlignHCenter | Qt::AlignVCenter, letter);
 	}
 
 	painter.end();

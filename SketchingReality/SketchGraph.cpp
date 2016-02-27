@@ -9,7 +9,7 @@
 
 namespace sketch {
 	const float STRAIGHT_THRESHOLD = 0.866f; // 30度に相当 (30度以上ずれた線分は、カーブとみなす)
-	const float DIST_TO_JUNCTION_THRESHOLD = 8.0f;
+	const float DIST_TO_JUNCTION_THRESHOLD = 0.026f;
 
 	SketchGraph* graphPtr;
 	std::vector<Face>* facesPtr;
@@ -430,19 +430,13 @@ namespace sketch {
 		std::vector<glm::vec2> p;
 		VertexIter vi, vend;
 		for (boost::tie(vi, vend) = boost::vertices(graph); vi != vend; ++vi) {
-			std::cout << "(" << graph[*vi]->pt.x << ", " << graph[*vi]->pt.y << ")" << std::endl;
+			std::cout << "(" << (graph[*vi]->pt.x * 0.5f + 0.5f) * screen_height + screen_width * 0.5f << ", " << (1.0f - graph[*vi]->pt.y) * screen_height << ")" << std::endl;
 
-			// わざと、X, Y座標ともに、screen_heightでわる。これにより、X座標も、Y座標と同じ比率となる。
-			p.push_back(glm::vec2((graph[*vi]->pt.x / screen_width * 2 - 1) * camera->aspect(), graph[*vi]->pt.y / screen_height * 2 - 1));
-		}
+			p.push_back(graph[*vi]->pt);
 
-		////////////////// debug ///////////////////////////////////////////////
-		for (int i = 0; i < pv.size(); ++i) {
-			pv[i].pt.x = (pv[i].pt.x / screen_width * 2 - 1) * camera->aspect();
-			pv[i].pt.y = pv[i].pt.y / screen_height * 2 - 1;
-			std::cout << "pv[" << i << "]: (" << pv[i].pt.x << ", " << pv[i].pt.y << ")" << std::endl;
+			// X, Y座標をnormalizeする
+			//p.push_back(glm::vec2((graph[*vi]->pt.x / screen_width * 2 - 1) * camera->aspect(), graph[*vi]->pt.y / screen_height * 2 - 1));
 		}
-		////////////////// debug ///////////////////////////////////////////////
 
 		// projection constraints
 		for (int i = 0; i < p.size(); ++i) {
@@ -457,8 +451,6 @@ namespace sketch {
 		K(0, 0) = glm::length(p[1] - p[0]) / glm::length(pv[2].pt - p[1]) / camera->f() * pv[2].pt.x;
 		K(1, 0) = glm::length(p[1] - p[0]) / glm::length(pv[2].pt - p[1]) / camera->f() * pv[2].pt.y;
 		K(2, 0) = glm::length(p[1] - p[0]) / glm::length(pv[2].pt - p[1]) / camera->f() * camera->f();
-		std::cout << "K_1,0: " << std::endl;
-		std::cout << K << std::endl;
 		A(8, 0) = 1;
 		A(8, 2) = K(0, 0);
 		A(8, 3) = -1;
