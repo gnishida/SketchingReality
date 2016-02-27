@@ -437,7 +437,7 @@ namespace sketch {
 		////////////////// debug ///////////////////////////////////////////////
 		for (int i = 0; i < pv.size(); ++i) {
 			pv[i].pt.x = pv[i].pt.x / screen_width * 2 - 1;
-			pv[i].pt.y = pv[i].pt.y / screen_width * 2 - 1;
+			pv[i].pt.y = pv[i].pt.y / screen_height * 2 - 1;
 			std::cout << "pv: (" << pv[i].pt.x << ", " << pv[i].pt.y << ")" << std::endl;
 		}
 		////////////////// debug ///////////////////////////////////////////////
@@ -454,7 +454,9 @@ namespace sketch {
 		cv::Mat_<float> K(3, 1);
 		K(0, 0) = glm::length(p[1] - p[0]) / glm::length(pv[2].pt - p[1]) / camera->f() * pv[2].pt.x;
 		K(1, 0) = glm::length(p[1] - p[0]) / glm::length(pv[2].pt - p[1]) / camera->f() * pv[2].pt.y;
-		K(2, 0) = glm::length(p[1] - p[0]) / glm::length(pv[2].pt - p[1]) / camera->f() * -camera->f();
+		K(2, 0) = glm::length(p[1] - p[0]) / glm::length(pv[2].pt - p[1]) / camera->f() * camera->f();
+		std::cout << "K_1,0: " << std::endl;
+		std::cout << K << std::endl;
 		A(8, 0) = 1;
 		A(8, 2) = K(0, 0);
 		A(8, 3) = -1;
@@ -466,7 +468,7 @@ namespace sketch {
 
 		K(0, 0) = glm::length(p[1] - p[2]) / glm::length(pv[0].pt - p[1]) / camera->f() * pv[0].pt.x;
 		K(1, 0) = glm::length(p[1] - p[2]) / glm::length(pv[0].pt - p[1]) / camera->f() * pv[0].pt.y;
-		K(2, 0) = glm::length(p[1] - p[2]) / glm::length(pv[0].pt - p[1]) / camera->f() * -camera->f();
+		K(2, 0) = glm::length(p[1] - p[2]) / glm::length(pv[0].pt - p[1]) / camera->f() * camera->f();
 		A(11, 3) = -1;
 		A(11, 6) = 1;
 		A(11, 8) = K(0, 0);
@@ -478,7 +480,7 @@ namespace sketch {
 
 		K(0, 0) = glm::length(p[0] - p[3]) / glm::length(pv[0].pt - p[0]) / camera->f() * pv[0].pt.x;
 		K(1, 0) = glm::length(p[0] - p[3]) / glm::length(pv[0].pt - p[0]) / camera->f() * pv[0].pt.y;
-		K(2, 0) = glm::length(p[0] - p[3]) / glm::length(pv[0].pt - p[0]) / camera->f() * -camera->f();
+		K(2, 0) = glm::length(p[0] - p[3]) / glm::length(pv[0].pt - p[0]) / camera->f() * camera->f();
 		A(14, 0) = -1;
 		A(14, 9) = 1;
 		A(14, 11) = K(0, 0);
@@ -490,7 +492,7 @@ namespace sketch {
 
 		K(0, 0) = glm::length(p[2] - p[3]) / glm::length(pv[2].pt - p[0]) / camera->f() * pv[2].pt.x;
 		K(1, 0) = glm::length(p[2] - p[3]) / glm::length(pv[2].pt - p[0]) / camera->f() * pv[2].pt.y;
-		K(2, 0) = glm::length(p[2] - p[3]) / glm::length(pv[2].pt - p[0]) / camera->f() * -camera->f();
+		K(2, 0) = glm::length(p[2] - p[3]) / glm::length(pv[2].pt - p[0]) / camera->f() * camera->f();
 		A(17, 6) = -1;
 		A(17, 9) = 1;
 		A(17, 11) = K(0, 0);
@@ -560,14 +562,20 @@ namespace sketch {
 		std::cout << "-------------------------------------------" << std::endl;
 		std::cout << "v0: (" << p0.x << ", " << p0.y << ", " << p0.z << ")" << std::endl;
 		std::cout << "v1: (" << p1.x << ", " << p1.y << ", " << p1.z << ")" << std::endl;
+		std::cout << "v2: (" << p2.x << ", " << p2.y << ", " << p2.z << ")" << std::endl;
 
 		std::cout << "u0: (" << p[0].x << ", " << p[0].y << ")" << std::endl;
 
 		glm::vec4 pp0 = camera->pMatrix * p0;
 		glm::vec4 pp1 = camera->pMatrix * p1;
+		glm::vec4 pp2 = camera->pMatrix * p2;
 		std::cout << "p0: (" << pp0.x / pp0.w << ", " << pp0.y / pp0.w << ")" << std::endl;
 		std::cout << "p1: (" << pp1.x / pp1.w << ", " << pp1.y / pp1.w << ")" << std::endl;
-		std::cout << "pv: (" << pv[2].pt.x << ", " << pv[2].pt.y << ")" << std::endl;
+		std::cout << "p2: (" << pp2.x / pp2.w << ", " << pp2.y / pp2.w << ")" << std::endl;
+		std::cout << "pv0: (" << pv[0].pt.x << ", " << pv[0].pt.y << ")" << std::endl;
+		std::cout << "pv2: (" << pv[2].pt.x << ", " << pv[2].pt.y << ")" << std::endl;
+		std::cout << "|p1-p0|/|pv-p1| = " << glm::length(glm::vec2(pp1.x / pp1.w, pp1.y / pp1.w) - glm::vec2(pp0.x / pp0.w, pp0.y / pp0.w)) / glm::length(pv[2].pt - glm::vec2(pp1.x / pp1.w, pp1.y / pp1.w)) << std::endl;
+		std::cout << "|p1-p2|/|pv-p1| = " << glm::length(glm::vec2(pp1.x / pp1.w, pp1.y / pp1.w) - glm::vec2(pp2.x / pp2.w, pp2.y / pp2.w)) / glm::length(pv[0].pt - glm::vec2(pp1.x / pp1.w, pp1.y / pp1.w)) << std::endl;
 
 		std::cout << std::endl;
 		std::cout << A << std::endl;
