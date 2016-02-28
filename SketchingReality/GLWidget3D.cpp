@@ -415,20 +415,20 @@ void GLWidget3D::computeVanishingPoints(std::vector<sketch::VanishingPoint>& pv)
 		pv[0].pt = pp2 - pp3;
 		pv[0].pt /= glm::length(pv[0].pt);
 	}
-	if (utils::segmentSegmentIntersect(pp4, pp3, pp5, pp6, &tab, &tcd, false, pv[1].pt)) {
+	if (utils::segmentSegmentIntersect(pp6, pp2, pp8, pp4, &tab, &tcd, false, pv[1].pt)) {
 		pv[1].type = sketch::VanishingPoint::TYPE_FINITE;
 	}
 	else {
-		pv[1].type = sketch::VanishingPoint::TYPE_INFINITE;
-		pv[1].pt = pp4 - pp3;
+		pv[1].type = sketch::VanishingPoint::TYPE_FINITE;
+		pv[1].pt = pp7 - pp3;
 		pv[1].pt /= glm::length(pv[1].pt);
 	}
-	if (utils::segmentSegmentIntersect(pp6, pp2, pp8, pp4, &tab, &tcd, false, pv[2].pt)) {
+	if (utils::segmentSegmentIntersect(pp4, pp3, pp5, pp6, &tab, &tcd, false, pv[2].pt)) {
 		pv[2].type = sketch::VanishingPoint::TYPE_FINITE;
 	}
 	else {
-		pv[2].type = sketch::VanishingPoint::TYPE_FINITE;
-		pv[2].pt = pp7 - pp3;
+		pv[2].type = sketch::VanishingPoint::TYPE_INFINITE;
+		pv[2].pt = pp4 - pp3;
 		pv[2].pt /= glm::length(pv[2].pt);
 	}
 }
@@ -593,6 +593,7 @@ void GLWidget3D::initializeGL() {
 
 	vertices.clear();
 	glutils::drawQuad(50, 50, glm::vec4(1, 0, 1, 1), glm::translate(glm::mat4(), glm::vec3(-25, 25, 0)), vertices);
+	glutils::drawQuad(50, 50, glm::vec4(0, 1, 1, 1), glm::rotate(glm::translate(glm::mat4(), glm::vec3(0, 25, -25)), (float)M_PI * 0.5f, glm::vec3(0, 1, 0)), vertices);
 	renderManager.addObject("box", "", vertices, false);
 	
 	// sketch imageを初期化

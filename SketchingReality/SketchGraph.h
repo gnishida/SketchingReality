@@ -35,8 +35,9 @@ namespace sketch {
 
 	class Face {
 	public:
+		std::vector<VertexDesc> vertices;
 		std::vector<EdgeDesc> edges;
-		std::vector<glm::vec2> points;
+		std::vector<glm::vec2> points; // contour points
 		float validness;
 		std::vector<int> pv;	// vanishing points
 

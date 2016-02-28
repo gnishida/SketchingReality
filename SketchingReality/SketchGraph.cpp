@@ -31,6 +31,7 @@ namespace sketch {
 	struct vertex_output_visitor : public output_visitor {
 		template <typename Vertex>
 		void next_vertex(Vertex v) {
+			facesPtr->back().vertices.push_back(v);
 		}
 
 		template <typename Edge>
@@ -494,8 +495,6 @@ namespace sketch {
 
 		cv::SVD svd(A);
 		cv::Mat x = svd.vt.row(svd.vt.rows - 1);
-		faces3d.clear();
-		Face3D face3d;
 
 		// 3D座標をうまくground plane上にするため、スケールを計算する		
 		glm::vec3 ppp(x.at<float>(0, 3), x.at<float>(0, 4), -x.at<float>(0, 5));
@@ -518,26 +517,31 @@ namespace sketch {
 		std::cout << "factor y: " << factor_y << std::endl;
 		std::cout << "factor z: " << factor_z << std::endl;
 		float factor = factor_y;
-
-
+		
 		// 3D座標を登録する
-		for (int i = 0; i < x.cols / 3; ++i) {
-			glm::dvec4 p(x.at<float>(0, i * 3) * factor, x.at<float>(0, i * 3 + 1) * factor, -x.at<float>(0, i * 3 + 2) * factor, 1);
-			p = glm::inverse(camera->mvMatrix) * p;
-			face3d.points.push_back(glm::vec3(p));
+		faces3d.clear();
+		for (int i = 0; i < faces.size(); ++i) {
+			Face3D face3d;
+
+			for (int j = 0; j < faces[i].vertices.size(); ++j) {
+				VertexDesc desc = faces[i].vertices[j];
+				
+				glm::vec4 p(x.at<float>(0, desc * 3) * factor, x.at<float>(0, desc * 3 + 1) * factor, -x.at<float>(0, desc * 3 + 2) * factor, 1);
+				p = glm::inverse(camera->mvMatrix) * p;
+				face3d.points.push_back(glm::vec3(p));
+			}
+
+			faces3d.push_back(face3d);
 		}
-		faces3d.push_back(face3d);
-
-
-
+		
 
 		///////////////////// DEBUG ///////////////////////////////////////////////////////////
 		std::cout << A * x.t() << std::endl;
 
-		std::cout << "3D points: " << std::endl;
+		/*std::cout << "3D points: " << std::endl;
 		for (int i = 0; i < face3d.points.size(); ++i) {
 			std::cout << "(" << x.at<float>(0, i * 3) << ", " << x.at<float>(0, i * 3 + 1) << ", " << x.at<float>(0, i * 3 + 2) << std::endl;
-		}
+		}*/
 
 		std::cout << "Projected points: " << std::endl;
 		for (int i = 0; i < 4; ++i) {
@@ -553,10 +557,14 @@ namespace sketch {
 		glm::vec4 p1(-50, 0, 0, 1);
 		glm::vec4 p2(0, 0, 0, 1);
 		glm::vec4 p3(0, 50, 0, 1);
+		glm::vec4 p4(0, 0, -50, 1);
+		glm::vec4 p5(0, 50, -50, 1);
 		p0 = camera->mvMatrix * p0;
 		p1 = camera->mvMatrix * p1;
 		p2 = camera->mvMatrix * p2;
 		p3 = camera->mvMatrix * p3;
+		p4 = camera->mvMatrix * p4;
+		p5 = camera->mvMatrix * p5;
 
 		x.at<float>(0, 0) = p0.x;
 		x.at<float>(0, 1) = p0.y;
@@ -570,6 +578,12 @@ namespace sketch {
 		x.at<float>(0, 9) = p3.x;
 		x.at<float>(0, 10) = p3.y;
 		x.at<float>(0, 11) = -p3.z;
+		x.at<float>(0, 12) = p4.x;
+		x.at<float>(0, 13) = p4.y;
+		x.at<float>(0, 14) = -p4.z;
+		x.at<float>(0, 15) = p5.x;
+		x.at<float>(0, 16) = p5.y;
+		x.at<float>(0, 17) = -p5.z;
 
 		std::cout << "-------------------------------------------" << std::endl;
 		std::cout << "Ideal result:" << std::endl;
