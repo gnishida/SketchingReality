@@ -498,12 +498,45 @@ namespace sketch {
 
 		cv::SVD svd(A);
 		cv::Mat x = svd.vt.row(svd.vt.rows - 1);
+		faces3d.clear();
+		Face3D face3d;
+
+		// 3D座標をうまくground plane上にするため、スケールを計算する		
+		glm::vec3 ppp(x.at<float>(0, 3), x.at<float>(0, 4), -x.at<float>(0, 5));
+		glm::mat3 R_inv;
+		glm::mat4 inv_mvMatrix = glm::inverse(camera->mvMatrix);
+		for (int i = 0; i < 3; ++i) {
+			for (int j = 0; j < 3; ++j) {
+				R_inv[i][j] = inv_mvMatrix[i][j];
+			}
+		}
+		glm::vec3 T_inv;
+		T_inv.x = inv_mvMatrix[3][0];
+		T_inv.y = inv_mvMatrix[3][1];
+		T_inv.z = inv_mvMatrix[3][2];
+		ppp = R_inv * ppp;
+		float factor_x = -T_inv.x / ppp.x;
+		float factor_y = -T_inv.y / ppp.y;
+		float factor_z = -T_inv.z / ppp.z;
+		std::cout << "factor x: " << factor_x << std::endl;
+		std::cout << "factor y: " << factor_y << std::endl;
+		std::cout << "factor z: " << factor_z << std::endl;
+		float factor = factor_y;
+
+	
+
+		for (int i = 0; i < 4; ++i) {
+			glm::dvec4 p(x.at<float>(0, i * 3) * factor, x.at<float>(0, i * 3 + 1) * factor, -x.at<float>(0, i * 3 + 2) * factor, 1);
+			p = glm::inverse(camera->mvMatrix) * p;
+			face3d.points.push_back(glm::vec3(p));
+		}
+		faces3d.push_back(face3d);
 
 		std::cout << A * x.t() << std::endl;
 
 		std::cout << "3D points: " << std::endl;
-		for (int i = 0; i < 4; ++i) {
-			std::cout << "(" << x.at<float>(0, i * 3) << ", " << x.at<float>(0, i * 3 + 1) << ", " << -x.at<float>(0, i * 3 + 2) << ")" << std::endl;
+		for (int i = 0; i < face3d.points.size(); ++i) {
+			std::cout << "(" << x.at<float>(0, i * 3) << ", " << x.at<float>(0, i * 3 + 1) << ", " << x.at<float>(0, i * 3 + 2) << std::endl;
 		}
 
 		std::cout << "Projected points: " << std::endl;

@@ -44,11 +44,20 @@ namespace sketch {
 		Face() : validness(0) {}
 	};
 
+	class Face3D {
+	public:
+		std::vector<glm::vec3> points;
+
+	public:
+		Face3D() {}
+	};
+
 	class SketchGraph {
 	public:
 		BGLGraph graph;
 		std::vector<VanishingPoint> pv;	// vanishing points
 		std::vector<Face> faces;
+		std::vector<Face3D> faces3d;
 
 	public:
 		SketchGraph();

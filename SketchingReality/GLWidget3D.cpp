@@ -435,6 +435,12 @@ void GLWidget3D::computeVanishingPoints(std::vector<sketch::VanishingPoint>& pv)
 
 void GLWidget3D::reconstruct() {
 	sketchGraph.reconstruct(&camera, width(), height());
+
+	std::vector<Vertex> vertices;
+	for (int i = 0; i < sketchGraph.faces3d.size(); ++i) {
+		glutils::drawPolygon(sketchGraph.faces3d[i].points, glm::vec4(1, 0, 0, 1), vertices);
+	}
+	renderManager.addObject("object", "", vertices, true);
 }
 
 void GLWidget3D::resizeSketch(int width, int height) {
