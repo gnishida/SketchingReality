@@ -74,6 +74,7 @@ namespace sketch {
 	void SketchGraph::clear() {
 		graph.clear();
 		faces.clear();
+		faces3d.clear();
 	}
 
 	void SketchGraph::addStroke(const std::vector<glm::vec2>& stroke) {
