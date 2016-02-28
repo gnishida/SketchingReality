@@ -678,13 +678,13 @@ void GLWidget3D::paintEvent(QPaintEvent* e) {
 	sketch::EdgeIter ei, eend;
 	for (boost::tie(ei, eend) = boost::edges(sketchGraph.graph); ei != eend; ++ei) {
 		QPen pen;
-		if (sketchGraph.graph[*ei]->g_values[0] > sketchGraph.graph[*ei]->g_values[1] && sketchGraph.graph[*ei]->g_values[0] > sketchGraph.graph[*ei]->g_values[2]) {
+		if (sketchGraph.graph[*ei]->best_g == 0) {
 			pen = QPen(QBrush(QColor(255, 0, 0)), 3);
 		}
-		else if (sketchGraph.graph[*ei]->g_values[1] > sketchGraph.graph[*ei]->g_values[2]) {
+		else if (sketchGraph.graph[*ei]->best_g == 1) {
 			pen = QPen(QBrush(QColor(0, 255, 0)), 3);
 		}
-		else if (sketchGraph.graph[*ei]->g_values[2] > 0) {
+		else if (sketchGraph.graph[*ei]->best_g == 2) {
 			pen = QPen(QBrush(QColor(0, 0, 255)), 3);
 		}
 		else {

@@ -14,6 +14,7 @@ namespace sketch {
 	public:
 		int type;
 		std::vector<float> g_values; // g(e, pv), which is defined in Equation (3) in the Sketching Reality paper
+		int best_g; // the index of the best vanishing point: 0, 1, or 2.
 		std::vector<glm::vec2> points;
 
 	public:

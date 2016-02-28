@@ -318,9 +318,23 @@ namespace sketch {
 
 	void SketchGraph::groupEdge(EdgeDesc e_desc) {
 		graph[e_desc]->g_values.resize(3);
+
 		graph[e_desc]->g_values[0] = g(e_desc, pv[0]);
 		graph[e_desc]->g_values[1] = g(e_desc, pv[1]);
 		graph[e_desc]->g_values[2] = g(e_desc, pv[2]);
+
+		if (graph[e_desc]->g_values[0] > graph[e_desc]->g_values[1] && graph[e_desc]->g_values[0] > graph[e_desc]->g_values[2]) {
+			graph[e_desc]->best_g = 0;
+		}
+		else if (graph[e_desc]->g_values[1] > graph[e_desc]->g_values[2]) {
+			graph[e_desc]->best_g = 1;
+		}
+		else if (graph[e_desc]->g_values[2] > 0.0f) {
+			graph[e_desc]->best_g = 2;
+		}
+		else {
+			graph[e_desc]->best_g = -1;
+		}
 	}
 
 	/**
@@ -425,7 +439,10 @@ namespace sketch {
 	}
 
 	void SketchGraph::reconstruct(Camera* camera, int screen_width, int screen_height) {
-		cv::Mat_<float> A(20, 12, 0.0f);
+		int num_verts = boost::num_vertices(graph);
+		int num_edges = boost::num_edges(graph);
+
+		cv::Mat_<float> A(num_verts * 2 + num_edges * 3, num_verts * 3, 0.0f);
 
 		std::vector<glm::vec2> p;
 		VertexIter vi, vend;
@@ -433,9 +450,6 @@ namespace sketch {
 			std::cout << "(" << (graph[*vi]->pt.x * 0.5f + 0.5f) * screen_height + screen_width * 0.5f << ", " << (1.0f - graph[*vi]->pt.y) * screen_height << ")" << std::endl;
 
 			p.push_back(graph[*vi]->pt);
-
-			// X, Y座標をnormalizeする
-			//p.push_back(glm::vec2((graph[*vi]->pt.x / screen_width * 2 - 1) * camera->aspect(), graph[*vi]->pt.y / screen_height * 2 - 1));
 		}
 
 		// projection constraints
@@ -447,54 +461,35 @@ namespace sketch {
 		}
 
 		// vanishing point constraints
-		cv::Mat_<float> K(3, 1);
-		K(0, 0) = glm::length(p[1] - p[0]) / glm::length(pv[2].pt - p[1]) / camera->f() * pv[2].pt.x;
-		K(1, 0) = glm::length(p[1] - p[0]) / glm::length(pv[2].pt - p[1]) / camera->f() * pv[2].pt.y;
-		K(2, 0) = glm::length(p[1] - p[0]) / glm::length(pv[2].pt - p[1]) / camera->f() * camera->f();
-		A(8, 0) = 1;
-		A(8, 2) = K(0, 0);
-		A(8, 3) = -1;
-		A(9, 1) = 1;
-		A(9, 2) = K(1, 0);
-		A(9, 4) = -1;
-		A(10, 2) = 1 + K(2, 0);
-		A(10, 5) = -1;
+		EdgeIter ei, eend;
+		int e_count = 0;
+		for (boost::tie(ei, eend) = boost::edges(graph); ei != eend; ++ei, ++e_count) {
+			int vp_index = graph[*ei]->best_g;
 
-		K(0, 0) = glm::length(p[1] - p[2]) / glm::length(pv[0].pt - p[1]) / camera->f() * pv[0].pt.x;
-		K(1, 0) = glm::length(p[1] - p[2]) / glm::length(pv[0].pt - p[1]) / camera->f() * pv[0].pt.y;
-		K(2, 0) = glm::length(p[1] - p[2]) / glm::length(pv[0].pt - p[1]) / camera->f() * camera->f();
-		A(11, 3) = -1;
-		A(11, 6) = 1;
-		A(11, 8) = K(0, 0);
-		A(12, 4) = -1;
-		A(12, 7) = 1;
-		A(12, 8) = K(1, 0);
-		A(13, 5) = -1;
-		A(13, 8) = 1 + K(2, 0);
+			// とりあえず、-1の時は0にしておく。さもないとエラーになるから。
+			if (vp_index < 0) vp_index = 0;
 
-		K(0, 0) = glm::length(p[0] - p[3]) / glm::length(pv[0].pt - p[0]) / camera->f() * pv[0].pt.x;
-		K(1, 0) = glm::length(p[0] - p[3]) / glm::length(pv[0].pt - p[0]) / camera->f() * pv[0].pt.y;
-		K(2, 0) = glm::length(p[0] - p[3]) / glm::length(pv[0].pt - p[0]) / camera->f() * camera->f();
-		A(14, 0) = -1;
-		A(14, 9) = 1;
-		A(14, 11) = K(0, 0);
-		A(15, 1) = -1;
-		A(15, 10) = 1;
-		A(15, 11) = K(1, 0);
-		A(16, 2) = -1;
-		A(16, 11) = 1 + K(2, 0);
+			// 頂点のindexを取得 (tgtの方がvanishing pointに近い)
+			VertexDesc src = boost::source(*ei, graph);
+			VertexDesc tgt = boost::target(*ei, graph);
+			if (glm::length(pv[vp_index].pt - graph[src]->pt) < glm::length(pv[vp_index].pt - graph[tgt]->pt)) {
+				src = boost::target(*ei, graph);
+				tgt = boost::source(*ei, graph);
+			}
 
-		K(0, 0) = glm::length(p[2] - p[3]) / glm::length(pv[2].pt - p[0]) / camera->f() * pv[2].pt.x;
-		K(1, 0) = glm::length(p[2] - p[3]) / glm::length(pv[2].pt - p[0]) / camera->f() * pv[2].pt.y;
-		K(2, 0) = glm::length(p[2] - p[3]) / glm::length(pv[2].pt - p[0]) / camera->f() * camera->f();
-		A(17, 6) = -1;
-		A(17, 9) = 1;
-		A(17, 11) = K(0, 0);
-		A(18, 7) = -1;
-		A(18, 10) = 1;
-		A(18, 11) = K(1, 0);
-		A(19, 8) = -1;
-		A(19, 11) = 1 + K(2, 0);
+			glm::vec2 p0 = graph[src]->pt;
+			glm::vec2 p1 = graph[tgt]->pt;
+
+			float K = glm::length(p1 - p0) / glm::length(pv[vp_index].pt - p1);
+			A(num_verts * 2 + e_count * 3 + 0, src * 3 + 0) = 1;
+			A(num_verts * 2 + e_count * 3 + 0, src * 3 + 2) = K * pv[vp_index].pt.x / camera->f();
+			A(num_verts * 2 + e_count * 3 + 0, tgt * 3 + 0) = -1;
+			A(num_verts * 2 + e_count * 3 + 1, src * 3 + 1) = 1;
+			A(num_verts * 2 + e_count * 3 + 1, src * 3 + 2) = K * pv[vp_index].pt.y / camera->f();
+			A(num_verts * 2 + e_count * 3 + 1, tgt * 3 + 1) = -1;
+			A(num_verts * 2 + e_count * 3 + 2, src * 3 + 2) = 1 + K;
+			A(num_verts * 2 + e_count * 3 + 2, tgt * 3 + 2) = -1;
+		}
 
 		cv::SVD svd(A);
 		cv::Mat x = svd.vt.row(svd.vt.rows - 1);
@@ -523,15 +518,19 @@ namespace sketch {
 		std::cout << "factor z: " << factor_z << std::endl;
 		float factor = factor_y;
 
-	
 
-		for (int i = 0; i < 4; ++i) {
+		// 3D座標を登録する
+		for (int i = 0; i < x.cols / 3; ++i) {
 			glm::dvec4 p(x.at<float>(0, i * 3) * factor, x.at<float>(0, i * 3 + 1) * factor, -x.at<float>(0, i * 3 + 2) * factor, 1);
 			p = glm::inverse(camera->mvMatrix) * p;
 			face3d.points.push_back(glm::vec3(p));
 		}
 		faces3d.push_back(face3d);
 
+
+
+
+		///////////////////// DEBUG ///////////////////////////////////////////////////////////
 		std::cout << A * x.t() << std::endl;
 
 		std::cout << "3D points: " << std::endl;
@@ -606,5 +605,6 @@ namespace sketch {
 
 		std::cout << std::endl;
 		std::cout << A << std::endl;
+		///////////////////// DEBUG ///////////////////////////////////////////////////////////
 	}
 }
