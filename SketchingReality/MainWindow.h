@@ -20,7 +20,7 @@ public slots:
 	void onLoadSketch();
 	void onSaveSketch();
 	void onUndo();
-	void onTest();
+	void onReconstruct();
 };
 
 #endif // MAINWINDOW_H

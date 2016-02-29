@@ -37,7 +37,7 @@
     <property name="title">
      <string>Test</string>
     </property>
-    <addaction name="actionTest"/>
+    <addaction name="actionReconstruct"/>
    </widget>
    <widget class="QMenu" name="menuEdit">
     <property name="title">
@@ -63,9 +63,9 @@
     <string>Exit</string>
    </property>
   </action>
-  <action name="actionTest">
+  <action name="actionReconstruct">
    <property name="text">
-    <string>Test</string>
+    <string>Reconstruct</string>
    </property>
   </action>
   <action name="actionNewSketch">

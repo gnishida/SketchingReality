@@ -26,7 +26,7 @@ public:
 	bool altPressed;
 	
 	QPoint lastPoint;
-	QImage sketch;
+	//QImage sketch;
 	std::vector<std::vector<glm::vec2> > strokes;
 	std::vector<glm::vec2> current_stroke;
 
@@ -43,7 +43,6 @@ public:
 	void drawLine(const QPoint& startPoint, const QPoint& endPoint);
 	void computeVanishingPoints(std::vector<sketch::VanishingPoint>& pv);
 	void reconstruct();
-	void resizeSketch(int width, int height);
 
 	void keyPressEvent(QKeyEvent* e);
 	void keyReleaseEvent(QKeyEvent* e);

@@ -257,11 +257,6 @@ void GLWidget3D::render() {
 }
 
 void GLWidget3D::clearSketch() {
-	sketch = QImage(this->width(), this->height(), QImage::Format_ARGB32);
-
-	//sketch = QImage(this->width(), this->height(), QImage::Format_RGB888);
-	//sketch.fill(qRgba(255, 255, 255, 255));
-
 	strokes.clear();
 	current_stroke.clear();
 	sketchGraph.clear();
@@ -272,24 +267,6 @@ void GLWidget3D::undo() {
 		strokes.erase(strokes.begin() + strokes.size() - 1);
 		current_stroke.clear();
 	}
-
-	sketch = QImage(this->width(), this->height(), QImage::Format_ARGB32);
-
-	QPainter painter(&sketch);
-	painter.setPen(QPen(QBrush(QColor(0, 0, 0)), 1));
-	painter.setRenderHint(QPainter::Antialiasing);
-	painter.setRenderHint(QPainter::HighQualityAntialiasing);
-
-	for (int i = 0; i < strokes.size(); ++i) {
-		if (strokes[i].size() <= 1) continue;
-
-		QPoint pt1(strokes[i][0].x, height() - strokes[i][0].y);
-		for (int k = 1; k < strokes[i].size(); ++k) {
-			QPoint pt2(strokes[i][k].x, height() - strokes[i][k].y);
-			painter.drawLine(pt1, pt2);
-			pt1 = pt2;
-		}
-	}
 }
 
 void GLWidget3D::loadSketch(const QString& filename) {
@@ -297,12 +274,6 @@ void GLWidget3D::loadSketch(const QString& filename) {
 	if (!file.open(QIODevice::ReadOnly)) return;
 
 	clearSketch();
-
-	QPainter painter(&sketch);
-	painter.setPen(QPen(QBrush(QColor(0, 0, 0)), 1));
-	painter.setRenderHint(QPainter::Antialiasing);
-	painter.setRenderHint(QPainter::HighQualityAntialiasing);
-	//painter.setPen(QPen(QBrush(QColor(0, 0, 0)), 3, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
 
 	QTextStream in(&file);
 	while (!in.atEnd()) {
@@ -323,7 +294,6 @@ void GLWidget3D::loadSketch(const QString& filename) {
 				else {
 					glm::vec2 pt2 = glm::vec2(xydata[0].toFloat(), xydata[1].toFloat());
 					stroke.push_back(pt2);
-					painter.drawLine(QPoint(pt1.x, height() - pt1.y), QPoint(pt2.x, height() - pt2.y));
 					pt1 = pt2;
 				}
 			}
@@ -364,16 +334,8 @@ void GLWidget3D::drawLine(const QPoint& startPoint, const QPoint& endPoint) {
 	QPoint pt1(startPoint.x(), startPoint.y());
 	QPoint pt2(endPoint.x(), endPoint.y());
 
-	QPainter painter(&sketch);
-	painter.setPen(QPen(QBrush(QColor(0, 0, 0)), 1));
-	painter.setRenderHint(QPainter::Antialiasing);
-	painter.setRenderHint(QPainter::HighQualityAntialiasing);
-	//painter.setPen(QPen(QBrush(QColor(0, 0, 0)), 3, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
-
 	current_stroke.push_back(glm::vec2(((float)endPoint.x() / width() * 2 - 1) * camera.aspect(), 1.0f - (float)endPoint.y() / height() * 2));
 	strokes.back().push_back(glm::vec2(((float)endPoint.x() / width() * 2 - 1) * camera.aspect(), 1.0f - (float)endPoint.y() / height() * 2));
-
-	painter.drawLine(pt1, pt2);
 }
 
 void GLWidget3D::computeVanishingPoints(std::vector<sketch::VanishingPoint>& pv) {
@@ -441,15 +403,6 @@ void GLWidget3D::reconstruct() {
 		glutils::drawPolygon(sketchGraph.faces3d[i].points, glm::vec4(1, 0, 0, 1), vertices);
 	}
 	renderManager.addObject("object", "", vertices, true);
-}
-
-void GLWidget3D::resizeSketch(int width, int height) {
-	QImage newImage(width, height, QImage::Format_ARGB32);
-	newImage.fill(qRgba(255, 255, 255, 0));
-	QPainter painter(&newImage);
-
-	painter.drawImage((width - sketch.width()) * 0.5, (height - sketch.height()) * 0.5, sketch);
-	sketch = newImage;
 }
 
 void GLWidget3D::keyPressEvent(QKeyEvent *e) {
@@ -585,19 +538,9 @@ void GLWidget3D::initializeGL() {
 	camera.zrot = 0.0f;
 	camera.pos = glm::vec3(0, 40, 158);
 
-	//clearImage();
-
 	std::vector<Vertex> vertices;
-	glutils::drawGrid(200, 200, 10, glm::vec4(0, 0, 1, 1), glm::vec4(0.9, 0.9, 1.0, 1), glm::rotate(glm::mat4(), -(float)M_PI * 0.5f, glm::vec3(1, 0, 0)), vertices);
+	glutils::drawGrid(200, 200, 10, glm::vec4(0.4, 0.4, 1, 1), glm::vec4(0.9, 0.9, 1.0, 1), glm::rotate(glm::mat4(), -(float)M_PI * 0.5f, glm::vec3(1, 0, 0)), vertices);
 	renderManager.addObject("axis", "", vertices, false);
-
-	vertices.clear();
-	glutils::drawQuad(50, 50, glm::vec4(1, 0, 1, 1), glm::translate(glm::mat4(), glm::vec3(-25, 25, 0)), vertices);
-	glutils::drawQuad(50, 50, glm::vec4(0, 1, 1, 1), glm::rotate(glm::translate(glm::mat4(), glm::vec3(0, 25, -25)), (float)M_PI * 0.5f, glm::vec3(0, 1, 0)), vertices);
-	renderManager.addObject("box", "", vertices, false);
-	
-	// sketch imageを初期化
-	sketch = QImage(this->width(), this->height(), QImage::Format_ARGB32);
 }
 
 /**
@@ -610,9 +553,6 @@ void GLWidget3D::resizeGL(int width, int height) {
 	camera.updatePMatrix(width, height);
 	renderManager.resize(width, height);
 	renderManager.updateShadowMap(this, light_dir, light_mvpMatrix);
-
-	// sketch imageを更新
-	resizeSketch(width, height);
 }
 
 /**
@@ -636,10 +576,7 @@ void GLWidget3D::paintEvent(QPaintEvent* e) {
 	glMatrixMode(GL_MODELVIEW);
 	glPopMatrix();
 
-	// draw sketch
 	QPainter painter(this);
-	painter.setOpacity(0.5);
-	//painter.drawImage(0, 0, sketch);
 
 	// draw a current stroke
 	painter.setOpacity(1.0f);

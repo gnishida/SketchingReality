@@ -27,7 +27,7 @@ class Ui_MainWindowClass
 {
 public:
     QAction *actionExit;
-    QAction *actionTest;
+    QAction *actionReconstruct;
     QAction *actionNewSketch;
     QAction *actionLoadSketch;
     QAction *actionSaveSketch;
@@ -47,8 +47,8 @@ public:
         MainWindowClass->resize(800, 600);
         actionExit = new QAction(MainWindowClass);
         actionExit->setObjectName(QStringLiteral("actionExit"));
-        actionTest = new QAction(MainWindowClass);
-        actionTest->setObjectName(QStringLiteral("actionTest"));
+        actionReconstruct = new QAction(MainWindowClass);
+        actionReconstruct->setObjectName(QStringLiteral("actionReconstruct"));
         actionNewSketch = new QAction(MainWindowClass);
         actionNewSketch->setObjectName(QStringLiteral("actionNewSketch"));
         actionLoadSketch = new QAction(MainWindowClass);
@@ -85,7 +85,7 @@ public:
         menuFile->addAction(actionSaveSketch);
         menuFile->addSeparator();
         menuFile->addAction(actionExit);
-        menuTest->addAction(actionTest);
+        menuTest->addAction(actionReconstruct);
         menuEdit->addAction(actionUndo);
 
         retranslateUi(MainWindowClass);
@@ -97,7 +97,7 @@ public:
     {
         MainWindowClass->setWindowTitle(QApplication::translate("MainWindowClass", "MainWindow", 0));
         actionExit->setText(QApplication::translate("MainWindowClass", "Exit", 0));
-        actionTest->setText(QApplication::translate("MainWindowClass", "Test", 0));
+        actionReconstruct->setText(QApplication::translate("MainWindowClass", "Reconstruct", 0));
         actionNewSketch->setText(QApplication::translate("MainWindowClass", "New Sketch", 0));
         actionNewSketch->setShortcut(QApplication::translate("MainWindowClass", "Ctrl+N", 0));
         actionLoadSketch->setText(QApplication::translate("MainWindowClass", "Load Sketch", 0));

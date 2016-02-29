@@ -10,7 +10,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
 	connect(ui.actionSaveSketch, SIGNAL(triggered()), this, SLOT(onSaveSketch()));
 	connect(ui.actionExit, SIGNAL(triggered()), this, SLOT(close()));
 	connect(ui.actionUndo, SIGNAL(triggered()), this, SLOT(onUndo()));
-	connect(ui.actionTest, SIGNAL(triggered()), this, SLOT(onTest()));
+	connect(ui.actionReconstruct, SIGNAL(triggered()), this, SLOT(onReconstruct()));
 
 	glWidget = new GLWidget3D(this);
 	setCentralWidget(glWidget);
@@ -41,6 +41,6 @@ void MainWindow::onUndo() {
 	glWidget->update();
 }
 
-void MainWindow::onTest() {
+void MainWindow::onReconstruct() {
 	glWidget->reconstruct();
 }
